@@ -9,6 +9,8 @@ error InvalidReceiver(address);
 error InvalidSender(address);
 error ERC20InsufficientBalance(address, uint256, uint256);
 error NftNotApproved(address);
+error ERC20InsufficientAllowance(address, uint256, uint256);
+error ERC721NonexistentToken(uint256);
 
 abstract contract ERC404 is Context {
     string private i_name;
@@ -144,7 +146,7 @@ abstract contract ERC404 is Context {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual {
+    ) internal virtual returns (address) {
         address owner = ownerOfNft(tokenId);
         if (owner != from) {
             address spender = _getNftApproved(tokenId);
@@ -154,6 +156,7 @@ abstract contract ERC404 is Context {
         }
         _ownersNft[tokenId] = to;
         emit Transfer(from, to, tokenId);
+        return from;
     }
 
     function isNftToken(
@@ -173,11 +176,46 @@ abstract contract ERC404 is Context {
         } else {
             uint256 allowedAmount = AllowanceOfErc20(from, spender);
             if (allowedAmount < amountOrId) {
-                revert("ERC20: transfer amount exceeds allowance");
+                revert ERC20InsufficientAllowance(
+                    spender,
+                    allowedAmount,
+                    amountOrId
+                );
             }
             approve(spender, allowedAmount - amountOrId);
             _updateErc20(from, to, amountOrId);
         }
         return true;
+    }
+
+    function _mintErc20(address account, uint256 value) internal {
+        if (account == address(0)) {
+            revert InvalidReceiver(address(0));
+        }
+        _updateErc20(address(0), account, value);
+    }
+
+    function _mintNft(address to, uint256 tokenId) internal {
+        if (to == address(0)) {
+            revert InvalidReceiver(address(0));
+        }
+        address previousOwner = _updateNft(address(0), to, tokenId);
+        if (previousOwner != address(0)) {
+            revert InvalidSender(address(0));
+        }
+    }
+
+    function _burnErc20(address account, uint256 value) internal {
+        if (account == address(0)) {
+            revert InvalidSender(address(0));
+        }
+        _updateErc20(account, address(0), value);
+    }
+
+    function _burnNft(uint256 tokenId) internal {
+        address previousOwner = _updateNft(address(0), address(0), tokenId);
+        if (previousOwner == address(0)) {
+            revert ERC721NonexistentToken(tokenId);
+        }
     }
 }
