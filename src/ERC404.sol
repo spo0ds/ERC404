@@ -40,6 +40,8 @@ abstract contract ERC404 is Context {
     mapping(uint256 => address) private _ownersNft;
     // which token is approved to address?
     mapping(uint256 => address) private _nftApprovals;
+    // which address holds which nfts?
+    mapping(address => uint256[] nftIds) private _nftHolders;
 
     constructor(
         string memory _name,
@@ -60,7 +62,7 @@ abstract contract ERC404 is Context {
     }
 
     function tokenCounter() public view virtual returns (uint256) {
-        console.log("The reward is %d", i_tokenCounter);
+        console.log("The token counter is %d", i_tokenCounter);
         return i_tokenCounter;
     }
 
@@ -81,6 +83,12 @@ abstract contract ERC404 is Context {
 
     function ownerOfNft(uint256 tokenId) public view virtual returns (address) {
         return _ownersNft[tokenId];
+    }
+
+    function getAllNftTokens(
+        address _address
+    ) public view returns (uint256[] memory) {
+        return _nftHolders[_address];
     }
 
     function _getNftApproved(
@@ -118,7 +126,8 @@ abstract contract ERC404 is Context {
             uint256 erc20Amount = amountOrId / 10e18;
             if (erc20Amount > 0) {
                 for (uint i = 0; i < erc20Amount; i++) {
-                    _mintNft(to, i_tokenCounter);
+                    uint256[] memory senderTokenId = getAllNftTokens(owner);
+                    transfer(to, senderTokenId[i]);
                 }
             }
             _updateErc20(owner, to, amountOrId);
@@ -218,6 +227,7 @@ abstract contract ERC404 is Context {
             revert InvalidReceiver(address(0));
         }
         i_tokenCounter = i_tokenCounter + 1;
+        _nftHolders[to].push(i_tokenCounter);
         address previousOwner = _updateNft(address(0), to, tokenId);
         if (previousOwner != address(0)) {
             revert InvalidSender(address(0));
