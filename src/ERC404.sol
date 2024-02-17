@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {Context} from "./Context.sol";
+import {console} from "forge-std/console.sol";
 
 error NotNftOwner();
 error InvalidReceiver(address);
@@ -17,7 +18,7 @@ abstract contract ERC404 is Context {
     string private i_symbol;
     uint256 private i_totalSupply;
 
-    uint256 private tokenCounter;
+    uint256 private i_tokenCounter;
 
     event Approval(
         address indexed owner,
@@ -56,6 +57,11 @@ abstract contract ERC404 is Context {
 
     function symbol() public view virtual returns (string memory) {
         return i_symbol;
+    }
+
+    function tokenCounter() public view virtual returns (uint256) {
+        console.log("The reward is %d", i_tokenCounter);
+        return i_tokenCounter;
     }
 
     function tokenURI(uint256 id) public view virtual returns (string memory);
@@ -109,6 +115,12 @@ abstract contract ERC404 is Context {
         if (isNftToken(amountOrId)) {
             _updateNft(owner, to, amountOrId);
         } else {
+            uint256 erc20Amount = amountOrId / 10e18;
+            if (erc20Amount > 0) {
+                for (uint i = 0; i < erc20Amount; i++) {
+                    _mintNft(to, i_tokenCounter);
+                }
+            }
             _updateErc20(owner, to, amountOrId);
         }
         return true;
@@ -162,7 +174,7 @@ abstract contract ERC404 is Context {
     function isNftToken(
         uint256 amountOrId
     ) internal view virtual returns (bool) {
-        return amountOrId <= tokenCounter && amountOrId > 0;
+        return amountOrId <= i_tokenCounter && amountOrId > 0;
     }
 
     function transferFrom(
@@ -192,6 +204,12 @@ abstract contract ERC404 is Context {
         if (account == address(0)) {
             revert InvalidReceiver(address(0));
         }
+        uint256 erc20Amount = value / 10e18;
+        if (erc20Amount > 0) {
+            for (uint i = 0; i < erc20Amount; i++) {
+                _mintNft(_msgSender(), i_tokenCounter);
+            }
+        }
         _updateErc20(address(0), account, value);
     }
 
@@ -199,6 +217,7 @@ abstract contract ERC404 is Context {
         if (to == address(0)) {
             revert InvalidReceiver(address(0));
         }
+        i_tokenCounter = i_tokenCounter + 1;
         address previousOwner = _updateNft(address(0), to, tokenId);
         if (previousOwner != address(0)) {
             revert InvalidSender(address(0));
