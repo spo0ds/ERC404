@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import {Test} from "forge-std/Test.sol";
 import {Example} from "../src/Example.sol";
 
-import "forge-std/console.sol";
-
 contract testExample is Test {
     Example public exmp;
     address owner = address(1);
@@ -36,7 +34,7 @@ contract testExample is Test {
     }
 
     function test_WhenSomeoneSend1WholeErc20Token() external {
-        // it transfer that erc20 and mint that much nft to the receiver.
+        // it transfer that erc20 and nft to the receiver.
         uint256 transferAmount = 10;
         vm.startPrank(owner);
         uint256 tokenCounterBefore = exmp.tokenCounter();
@@ -57,18 +55,41 @@ contract testExample is Test {
 
     function test_WhenSomeoneSendsFractionalErc20Token() external {
         // it sould check the balance of erc20 from before and it not whole much burn that much nft.
-        uint256 transferAmount = 1;
         vm.startPrank(owner);
         uint256[] memory senderTokenId = exmp.getAllNftTokens(owner);
-        exmp.transfer(alice, transferAmount * 10e17);
-        uint256 tokenBalance = exmp.balanceOfErc20(alice);
-        assertEq(tokenBalance, transferAmount * 10e17);
+        uint256 burnedToken = senderTokenId[senderTokenId.length - 1];
+        assertEq(senderTokenId.length, 10_000);
+        exmp.transfer(alice, 10e17);
+        assertEq(address(0), exmp.ownerOfNft(burnedToken));
+        uint256 tokenBalance = exmp.balanceOfErc20(owner);
+        assertEq(tokenBalance, total_supply * 10e18 - 10e17);
+
+        // checking for 2 fractional equal to 1 whole
+        uint256[] memory senderTokenIdNew = exmp.getAllNftTokens(owner);
+        uint256 burnedTokenCounter = senderTokenIdNew[
+            senderTokenIdNew.length - 1
+        ];
+        uint256 tokenCounterBefore = exmp.tokenCounter();
+        uint256 ownerBeforeBalance = exmp.balanceOfErc20(owner);
+        exmp.transfer(bob, 5 * 10e17);
+        assertEq(address(0), exmp.ownerOfNft(burnedTokenCounter)); // need to remove ids from the holders mapping array
+        tokenBalance = exmp.balanceOfErc20(bob);
+        assertEq(tokenBalance, 5 * 10e17);
         tokenBalance = exmp.balanceOfErc20(owner);
-        assertEq(tokenBalance, total_supply * 10e18 - transferAmount * 10e17);
-        for (uint256 i = 0; i < transferAmount; ++i) {
-            address nftOwner = exmp.ownerOfNft(senderTokenId[i]);
-            assertEq(nftOwner, owner);
-        }
+        assertEq(tokenBalance, ownerBeforeBalance - 5 * 10e17);
+        uint256 tokenCounterAfter = exmp.tokenCounter();
+        assertEq(tokenCounterBefore, tokenCounterAfter);
+        exmp.transfer(bob, 5 * 10e17);
+        assertEq(10e18, exmp.balanceOfErc20(bob));
+        tokenCounterAfter = exmp.tokenCounter();
+        assertEq(tokenCounterAfter, tokenCounterBefore + 1);
+        uint256[] memory senderTokenId2 = exmp.getAllNftTokens(bob);
+        uint256 holdernewBalance = senderTokenId2.length;
+        uint256 mintedToken = senderTokenId2[holdernewBalance - 1];
+        address newIdOwner = exmp.ownerOfNft(mintedToken); // tokenCounterAfter same
+        assertEq(bob, newIdOwner);
         vm.stopPrank();
     }
+    // prevent double burning like if address 1 sends fractional 0.5 token 1 nft is burned and again if address 1 sends 0.5 token again nft is burned but we need only one nft to be burned.
+    // maybe put a flag to indicate nft is already burned for that range fractional erc20 value
 }
