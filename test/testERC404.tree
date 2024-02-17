@@ -1,0 +1,8 @@
+testERC404
+├── when total supply is passed in constructor
+│   └── it should mint that much erc20 and erc721 token.
+├── when someone send 1 whole erc20 token 
+│   └── it transfer that erc20 and mint that much nft to the receiver.
+│   └── it should burn that much nft from the sender address.
+└── when someone sends fractional erc20 token
+    └── it sould check the balance of erc20 from before and it not whole much burn that much nft.
