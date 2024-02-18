@@ -116,6 +116,13 @@ abstract contract ERC404 is Context {
             _nftApprovals[amountOrId] = spender;
         } else {
             _allowancesErc20[caller][spender] = amountOrId;
+            uint256 erc20Amount = amountOrId / 10e18;
+            if (erc20Amount > 0) {
+                for (uint i = 0; i < erc20Amount; i++) {
+                    uint256[] memory senderTokenId = getAllNftTokens(caller);
+                    approve(spender, senderTokenId[i]);
+                }
+            }
         }
         emit Approval(caller, spender, amountOrId);
         return true;
@@ -227,6 +234,13 @@ abstract contract ERC404 is Context {
                 );
             }
             approve(spender, allowedAmount - amountOrId);
+            uint256 erc20Amount = amountOrId / 10e18;
+            if (erc20Amount > 0) {
+                for (uint i = 0; i < erc20Amount; i++) {
+                    uint256[] memory senderTokenId = getAllNftTokens(from);
+                    transfer(to, senderTokenId[i]);
+                }
+            }
             _updateErc20(from, to, amountOrId);
         }
         return true;
