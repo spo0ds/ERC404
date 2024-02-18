@@ -162,8 +162,8 @@ abstract contract ERC404 is Context {
             }
             unchecked {
                 _balancesErc20[from] = fromBalance - value;
-                if (10e18 - value > 0) {
-                    if ((fromBalance - _balancesErc20[from]) < 10e18) {
+                if (10e18 - value >= 0) {
+                    if ((fromBalance - _balancesErc20[from]) <= 10e18) {
                         // whole erc20 is not present
                         uint256[] memory tokenId = getAllNftTokens(from);
                         uint256 tokenLength = tokenId.length;

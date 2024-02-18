@@ -13,4 +13,16 @@ contract Example is ERC404 {
         return
             string.concat("https://example.com/token/", Strings.toString(id));
     }
+
+    function mintErc20(address account, uint256 value) external {
+        _mintErc20(account, value);
+    }
+
+    function burnErc20(address account, uint256 value) external {
+        _burnErc20(account, value);
+    }
+
+    function burnNft(uint256 tokenId) external {
+        _burnNft(tokenId);
+    }
 }
