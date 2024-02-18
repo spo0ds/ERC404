@@ -90,6 +90,37 @@ contract testExample is Test {
         assertEq(bob, newIdOwner);
         vm.stopPrank();
     }
+
     // prevent double burning like if address 1 sends fractional 0.5 token 1 nft is burned and again if address 1 sends 0.5 token again nft is burned but we need only one nft to be burned.
     // maybe put a flag to indicate nft is already burned for that range fractional erc20 value
+
+    function test_WhenOwnerApproveErc20TokenToAnotherAddress(
+        uint256 tokenId
+    ) external {
+        vm.startPrank(owner);
+        uint256 ownerBalanceBefore = exmp.balanceOfErc20(owner);
+        exmp.approve(alice, 10 * 10e18);
+        uint256 ownerBalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(ownerBalanceAfter, ownerBalanceBefore);
+        assertEq(0, exmp.balanceOfErc20(alice));
+        uint256 tokenCounter = exmp.tokenCounter();
+        if (tokenId <= tokenCounter && tokenId > 0) {
+            address nftOwner = exmp.ownerOfNft(tokenId);
+            assertEq(nftOwner, owner);
+        }
+        vm.stopPrank();
+
+        // now alice uses approved token to transfer to bob
+        vm.startPrank(alice);
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        exmp.transferFrom(owner, bob, 10 * 10e18);
+        uint256 bobErc20Balance = exmp.balanceOfErc20(bob);
+        assertEq(10 * 10e18, bobErc20Balance);
+        assertEq(ownerBalanceBefore - 10 * 10e18, exmp.balanceOfErc20(owner));
+        for (uint256 i; i < 10; i++) {
+            address nftOwner = exmp.ownerOfNft(ownerTokenId[i]);
+            assertEq(nftOwner, bob);
+        }
+        vm.stopPrank();
+    }
 }
