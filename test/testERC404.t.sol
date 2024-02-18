@@ -123,4 +123,141 @@ contract testExample is Test {
         }
         vm.stopPrank();
     }
+
+    function test_RevertWhen_NotApprovedAddressTriesToTransferBalance()
+        external
+    {
+        vm.startPrank(owner);
+        exmp.approve(alice, 10 * 10e18);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        vm.expectRevert();
+        exmp.transferFrom(owner, bob, 10 * 10e18);
+        vm.stopPrank();
+    }
+
+    function test_WhenOwnerApproveFractionalErc20TokenToAnotherAddress(
+        uint256 tokenId
+    ) external {
+        vm.startPrank(owner);
+        uint256 ownerBalanceBefore = exmp.balanceOfErc20(owner);
+        exmp.approve(alice, 10e18);
+        uint256 ownerBalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(ownerBalanceAfter, ownerBalanceBefore);
+        assertEq(0, exmp.balanceOfErc20(alice));
+        uint256 tokenCounter = exmp.tokenCounter();
+        if (tokenId <= tokenCounter && tokenId > 0) {
+            address nftOwner = exmp.ownerOfNft(tokenId);
+            assertEq(nftOwner, owner);
+        }
+        vm.stopPrank();
+        // now alice uses approved token to transfer to bob
+        vm.startPrank(alice);
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        exmp.transferFrom(owner, bob, 5 * 10e17);
+        uint256 bobErc20Balance = exmp.balanceOfErc20(bob);
+        assertEq(5 * 10e17, bobErc20Balance);
+        assertEq(ownerBalanceBefore - 5 * 10e17, exmp.balanceOfErc20(owner));
+        address newNftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(newNftOwner, address(0));
+        exmp.transferFrom(owner, bob, 5 * 10e17);
+        tokenCounter = exmp.tokenCounter();
+        address bobNftOwner = exmp.ownerOfNft(tokenCounter);
+        assertEq(bobNftOwner, bob);
+        address burntNftOwner = exmp.ownerOfNft(ownerTokenId.length - 1);
+        assertEq(burntNftOwner, address(0));
+        vm.stopPrank();
+    }
+
+    function test_WhenERC20TokenIsMinted() external {
+        vm.startPrank(owner);
+        // it should mint nft if the erc20 amount is whole
+        uint256 tokenCounter = exmp.tokenCounter();
+        uint256 Erc20Balance = exmp.balanceOfErc20(owner);
+        exmp.mintErc20(owner, 10e18);
+        uint256 Erc20BalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(Erc20Balance + 10e18, Erc20BalanceAfter);
+        uint256 newTokenCounter = exmp.tokenCounter();
+        assertEq(tokenCounter + 1, newTokenCounter);
+
+        // it should not mint nft if the erc20 amount is not whole
+        tokenCounter = exmp.tokenCounter();
+        exmp.mintErc20(owner, 5 * 10e17);
+        newTokenCounter = exmp.tokenCounter();
+        assertEq(tokenCounter, newTokenCounter);
+        vm.stopPrank();
+    }
+
+    function test_WhenErc20TokenIsBurned() external {
+        vm.startPrank(owner);
+        // it should burn the nft
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        address nftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(nftOwner, owner);
+        uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
+        exmp.burnErc20(owner, 10e18);
+        uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(erc20BalanceAfter + 10e18, erc20BalanceBefore);
+        nftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(nftOwner, address(0));
+
+        // while burning fractional erc20 token
+        uint256[] memory ownerTokenIdNew = exmp.getAllNftTokens(owner);
+        nftOwner = exmp.ownerOfNft(ownerTokenIdNew.length);
+        assertEq(nftOwner, owner);
+        exmp.burnErc20(owner, 5 * 10e17);
+        nftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(nftOwner, address(0));
+        vm.stopPrank();
+    }
+
+    function test_WhenNftIsBurned() external {
+        vm.startPrank(owner);
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        address nftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(nftOwner, owner);
+        uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
+        uint256 tokenCounter = exmp.tokenCounter();
+        exmp.burnNft(ownerTokenId.length);
+        uint256 newTokenCounter = exmp.tokenCounter();
+        assertEq(tokenCounter, newTokenCounter);
+        uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(erc20BalanceAfter, erc20BalanceBefore);
+        nftOwner = exmp.ownerOfNft(ownerTokenId.length);
+        assertEq(nftOwner, address(0));
+        vm.stopPrank();
+    }
+
+    function test_WhenNftIsTransferred() external {
+        vm.startPrank(owner);
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        uint256 tokenId = ownerTokenId.length;
+        address nftOwner = exmp.ownerOfNft(tokenId);
+        assertEq(nftOwner, owner);
+        uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
+        exmp.transfer(alice, tokenId);
+        uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(erc20BalanceAfter, erc20BalanceBefore);
+        nftOwner = exmp.ownerOfNft(tokenId);
+        assertEq(nftOwner, alice);
+        vm.stopPrank();
+    }
+
+    function test_WhenNftIsApproved() external {
+        vm.startPrank(owner);
+        uint256[] memory ownerTokenId = exmp.getAllNftTokens(owner);
+        uint256 tokenId = ownerTokenId.length;
+        address nftOwner = exmp.ownerOfNft(tokenId);
+        assertEq(nftOwner, owner);
+        uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
+        exmp.approve(alice, tokenId);
+        vm.stopPrank();
+        vm.startPrank(alice);
+        exmp.transferFrom(owner, bob, tokenId);
+        uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
+        assertEq(erc20BalanceAfter, erc20BalanceBefore);
+        nftOwner = exmp.ownerOfNft(tokenId);
+        assertEq(nftOwner, bob);
+        vm.stopPrank();
+    }
 }
