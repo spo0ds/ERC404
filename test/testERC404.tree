@@ -28,3 +28,7 @@ testERC404
     └── it should allow only nft to be burned no changes to erc20
 └── when nft is transferred
     └── it should only transfer nft, no changes to erc20 balance
+└── when nft is approved
+    └── it should only allow approved address to use that nft without changing erc20 balance
+└── when fractional erc20 is transferred
+    └── it should only allow 1 nft to be burned between 0 to < 10^18
