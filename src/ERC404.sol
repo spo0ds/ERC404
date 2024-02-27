@@ -17,7 +17,6 @@ abstract contract ERC404 is Context {
     string private i_name;
     string private i_symbol;
     uint256 private i_totalSupply;
-
     uint256 private i_tokenCounter;
 
     event Approval(
@@ -62,7 +61,6 @@ abstract contract ERC404 is Context {
     }
 
     function tokenCounter() public view virtual returns (uint256) {
-        console.log("The token counter is %d", i_tokenCounter);
         return i_tokenCounter;
     }
 
@@ -112,9 +110,9 @@ abstract contract ERC404 is Context {
             _allowancesErc20[caller][spender] = amountOrId;
             uint256 erc20Amount = amountOrId / 10e18;
             if (erc20Amount > 0) {
+                uint256[] memory senderTokenId = getAllNftTokens(caller);
                 for (uint i = 0; i < erc20Amount; i++) {
-                    uint256[] memory senderTokenId = getAllNftTokens(caller);
-                    approve(spender, senderTokenId[i]);
+                    _nftApprovals[senderTokenId[i]] = spender;
                 }
             }
         }
@@ -132,9 +130,9 @@ abstract contract ERC404 is Context {
         } else {
             uint256 erc20Amount = amountOrId / 10e18;
             if (erc20Amount > 0) {
+                uint256[] memory senderTokenId = getAllNftTokens(owner);
                 for (uint i = 0; i < erc20Amount; i++) {
-                    uint256[] memory senderTokenId = getAllNftTokens(owner);
-                    transfer(to, senderTokenId[i]);
+                    _updateNft(owner, to, senderTokenId[i]);
                 }
             }
             _updateErc20(owner, to, amountOrId);
@@ -145,7 +143,7 @@ abstract contract ERC404 is Context {
     function _updateErc20(
         address from,
         address to,
-        uint256 value 
+        uint256 value
     ) internal virtual {
         if (from == address(0)) {
             i_totalSupply += value;
@@ -159,7 +157,7 @@ abstract contract ERC404 is Context {
                 if (10e18 > value) {
                     uint256[] memory tokenId = getAllNftTokens(from);
                     uint256 tokenLength = tokenId[tokenId.length - 1];
-                    if (fromBalance % 10e18 == 0){
+                    if (fromBalance % 10e18 == 0) {
                         assembly {
                             mstore(tokenId, sub(mload(tokenId), 1))
                         }
@@ -187,8 +185,6 @@ abstract contract ERC404 is Context {
         } else {
             unchecked {
                 _balancesErc20[to] += value;
-                uint256[] memory tokenId = getAllNftTokens(from);
-                uint256 tokenLength = tokenId.length;
                 if (value <= 10e18) {
                     if (_balancesErc20[to] / 10e18 == 1) {
                         _mintNft(to, ++i_tokenCounter);
@@ -242,8 +238,8 @@ abstract contract ERC404 is Context {
             approve(spender, allowedAmount - amountOrId);
             uint256 erc20Amount = amountOrId / 10e18;
             if (erc20Amount > 0) {
+                uint256[] memory senderTokenId = getAllNftTokens(from);
                 for (uint i = 0; i < erc20Amount; i++) {
-                    uint256[] memory senderTokenId = getAllNftTokens(from);
                     transfer(to, senderTokenId[i]);
                 }
             }
