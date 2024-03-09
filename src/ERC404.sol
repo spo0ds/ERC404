@@ -107,17 +107,25 @@ abstract contract ERC404 is Context {
             }
             _nftApprovals[amountOrId] = spender;
         } else {
-            _allowancesErc20[caller][spender] = amountOrId;
-            uint256 erc20Amount = amountOrId / 10e18;
-            if (erc20Amount > 0) {
-                uint256[] memory senderTokenId = getAllNftTokens(caller);
-                for (uint i = 0; i < erc20Amount; i++) {
-                    _nftApprovals[senderTokenId[i]] = spender;
-                }
-            }
+            approveErc20(caller, spender, amountOrId);
         }
         emit Approval(caller, spender, amountOrId);
         return true;
+    }
+
+    function approveErc20(
+        address owner,
+        address spender,
+        uint256 amount
+    ) private {
+        _allowancesErc20[owner][spender] = amount;
+        uint256 erc20Amount = amount / 10e18;
+        if (erc20Amount > 0) {
+            uint256[] memory senderTokenId = getAllNftTokens(owner);
+            for (uint i = 0; i < erc20Amount; i++) {
+                _nftApprovals[senderTokenId[i]] = spender;
+            }
+        }
     }
 
     function transfer(
@@ -156,26 +164,19 @@ abstract contract ERC404 is Context {
                 _balancesErc20[from] = fromBalance - value;
                 if (10e18 > value) {
                     uint256[] memory tokenId = getAllNftTokens(from);
-                    uint256 tokenLength = tokenId[tokenId.length - 1];
+                    uint256 token = tokenId[tokenId.length - 1];
                     if (fromBalance % 10e18 == 0) {
-                        assembly {
-                            mstore(tokenId, sub(mload(tokenId), 1))
-                        }
-                        _nftHolders[from] = tokenId;
-                        _burnNft(tokenLength);
+                        _nftHolders[from].pop();
+                        _burnNft(token);
                     }
                 }
             }
         }
         if (to == address(0)) {
-            uint256[] memory tokenId = getAllNftTokens(from);
-            uint256 tokenLength = tokenId.length;
+            uint256 tokenLength = getAllNftTokens(from).length;
             if (value <= 10e18) {
                 if (_balancesErc20[from] % 10e18 == 0) {
-                    assembly {
-                        mstore(tokenId, sub(mload(tokenId), 1))
-                    }
-                    _nftHolders[from] = tokenId;
+                    _nftHolders[from].pop();
                     _burnNft(tokenLength);
                 }
             }
@@ -235,12 +236,12 @@ abstract contract ERC404 is Context {
                     amountOrId
                 );
             }
-            approve(spender, allowedAmount - amountOrId);
+            approveErc20(from, spender, allowedAmount - amountOrId);
             uint256 erc20Amount = amountOrId / 10e18;
             if (erc20Amount > 0) {
                 uint256[] memory senderTokenId = getAllNftTokens(from);
                 for (uint i = 0; i < erc20Amount; i++) {
-                    transfer(to, senderTokenId[i]);
+                    _updateNft(from, to, senderTokenId[i]);
                 }
             }
             _updateErc20(from, to, amountOrId);
