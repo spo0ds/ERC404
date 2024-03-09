@@ -17,7 +17,7 @@ contract testExample is Test {
         vm.stopPrank();
     }
 
-        function test_WhenTotalSupplyIsPassedInConstructor(
+    function test_WhenTotalSupplyIsPassedInConstructor(
         uint256 tokenId
     ) external {
         // it should mint that much erc20 and erc721 token.
@@ -98,8 +98,6 @@ contract testExample is Test {
         exmp.transferFrom(owner, bob, 10 * 10e18);
         vm.stopPrank();
     }
-
-    
 
     function test_WhenERC20TokenIsMinted() external {
         vm.startPrank(owner);
@@ -196,8 +194,7 @@ contract testExample is Test {
         vm.stopPrank();
     }
 
-
-    function test_When() external {
+    function test_WhenRecieverHasFullErc20Gets1Nft() external {
         vm.startPrank(owner);
         uint256 tokenCounterBefore = exmp.tokenCounter();
         exmp.mintErc20(bob, 5 * 10e17);
@@ -245,7 +242,7 @@ contract testExample is Test {
         vm.stopPrank();
     }
 
-function test_WhenOwnerApproveFractionalErc20TokenToAnotherAddress(
+    function test_WhenOwnerApproveFractionalErc20TokenToAnotherAddress(
         uint256 tokenId
     ) external {
         vm.startPrank(owner);
@@ -275,6 +272,12 @@ function test_WhenOwnerApproveFractionalErc20TokenToAnotherAddress(
         assertEq(bobNftOwner, bob);
         address burntNftOwner = exmp.ownerOfNft(ownerTokenId.length - 1);
         assertEq(burntNftOwner, owner);
+        vm.stopPrank();
+    }
+
+    function test_TransferGasForOptimization() external {
+        vm.startPrank(owner);
+        exmp.transfer(alice, 5 * 10 ** 18);
         vm.stopPrank();
     }
 }
