@@ -89,6 +89,16 @@ abstract contract ERC404 is Context {
         return _nftHolders[_address];
     }
 
+    function getNftTokensByCount(
+        address _address,
+        uint256 count
+    ) private view returns (uint256[] memory nftIds) {
+        nftIds = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            nftIds[i] = _nftHolders[_address][i];
+        }
+    }
+
     function _getNftApproved(
         uint256 tokenId
     ) internal view virtual returns (address) {
@@ -122,7 +132,10 @@ abstract contract ERC404 is Context {
         unchecked {
             uint256 erc20Amount = amount / 10e18;
             if (erc20Amount > 0) {
-                uint256[] memory senderTokenId = getAllNftTokens(owner);
+                uint256[] memory senderTokenId = getNftTokensByCount(
+                    owner,
+                    erc20Amount
+                );
                 for (uint i = 0; i < erc20Amount; i++) {
                     _nftApprovals[senderTokenId[i]] = spender;
                 }
@@ -141,7 +154,10 @@ abstract contract ERC404 is Context {
             unchecked {
                 uint256 erc20Amount = amountOrId / 10e18;
                 if (erc20Amount > 0) {
-                    uint256[] memory senderTokenId = getAllNftTokens(owner);
+                    uint256[] memory senderTokenId = getNftTokensByCount(
+                        owner,
+                        erc20Amount
+                    );
                     for (uint i = 0; i < erc20Amount; i++) {
                         // _updateNft(owner, to, senderTokenId[i]);
                         _ownersNft[senderTokenId[i]] = to;
@@ -151,6 +167,12 @@ abstract contract ERC404 is Context {
             _updateErc20(owner, to, amountOrId);
         }
         return true;
+    }
+
+    function getLastNftToken(address _address) private view returns (uint256) {
+        uint256[] storage tokenId = _nftHolders[_address];
+        // require(tokenId.length > 0, "No NFTs found for the given address");
+        return tokenId[tokenId.length - 1];
     }
 
     function _updateErc20(
@@ -168,8 +190,9 @@ abstract contract ERC404 is Context {
             unchecked {
                 _balancesErc20[from] = fromBalance - value;
                 if (10e18 > value) {
-                    uint256[] memory tokenId = getAllNftTokens(from);
-                    uint256 token = tokenId[tokenId.length - 1];
+                    // uint256[] memory tokenId = getAllNftTokens(from);
+                    // uint256 token = tokenId[tokenId.length - 1];
+                    uint256 token = getLastNftToken(from);
                     if (fromBalance % 10e18 == 0) {
                         _nftHolders[from].pop();
                         // _burnNft(token);
@@ -186,6 +209,7 @@ abstract contract ERC404 is Context {
                         _nftHolders[from].pop();
                         // _burnNft(tokenLength);
                         _ownersNft[tokenLength] = address(0);
+                        // _ownersNft[getTokenHolderCount(from)] = address(0);
                     }
                 }
             }
@@ -251,9 +275,13 @@ abstract contract ERC404 is Context {
             unchecked {
                 uint256 erc20Amount = amountOrId / 10e18;
                 if (erc20Amount > 0) {
-                    uint256[] memory senderTokenId = getAllNftTokens(from);
+                    uint256[] memory senderTokenId = getNftTokensByCount(
+                        from,
+                        erc20Amount
+                    );
                     for (uint i = 0; i < erc20Amount; i++) {
                         // _updateNft(from, to, senderTokenId[i]);
+                        _nftHolders[from].pop();
                         _ownersNft[senderTokenId[i]] = to;
                     }
                 }
