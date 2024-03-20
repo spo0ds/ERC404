@@ -93,9 +93,12 @@ abstract contract ERC404 is Context {
         address _address,
         uint256 count
     ) private view returns (uint256[] memory nftIds) {
-        nftIds = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            nftIds[i] = _nftHolders[_address][i];
+        unchecked {
+            nftIds = new uint256[](count);
+            for (uint256 i = 0; i < count; ) {
+                nftIds[i] = _nftHolders[_address][i];
+                ++i;
+            }
         }
     }
 
@@ -136,8 +139,9 @@ abstract contract ERC404 is Context {
                     owner,
                     erc20Amount
                 );
-                for (uint i = 0; i < erc20Amount; i++) {
+                for (uint i = 0; i < erc20Amount; ) {
                     _nftApprovals[senderTokenId[i]] = spender;
+                    ++i;
                 }
             }
         }
@@ -158,9 +162,10 @@ abstract contract ERC404 is Context {
                         owner,
                         erc20Amount
                     );
-                    for (uint i = 0; i < erc20Amount; i++) {
+                    for (uint i = 0; i < erc20Amount; ) {
                         // _updateNft(owner, to, senderTokenId[i]);
                         _ownersNft[senderTokenId[i]] = to;
+                        ++i;
                     }
                 }
             }
@@ -171,7 +176,6 @@ abstract contract ERC404 is Context {
 
     function getLastNftToken(address _address) private view returns (uint256) {
         uint256[] storage tokenId = _nftHolders[_address];
-        // require(tokenId.length > 0, "No NFTs found for the given address");
         return tokenId[tokenId.length - 1];
     }
 
@@ -189,7 +193,7 @@ abstract contract ERC404 is Context {
             }
             unchecked {
                 _balancesErc20[from] = fromBalance - value;
-                if (10e18 > value) {
+                if (value <= 10e18) {
                     // uint256[] memory tokenId = getAllNftTokens(from);
                     // uint256 token = tokenId[tokenId.length - 1];
                     uint256 token = getLastNftToken(from);
@@ -202,18 +206,18 @@ abstract contract ERC404 is Context {
             }
         }
         if (to == address(0)) {
-            uint256 tokenLength = getAllNftTokens(from).length;
+            // uint256 tokenLength = getAllNftTokens(from).length;
+            uint256 token = getLastNftToken(from);
             unchecked {
                 if (value <= 10e18) {
                     if (_balancesErc20[from] % 10e18 == 0) {
                         _nftHolders[from].pop();
                         // _burnNft(tokenLength);
-                        _ownersNft[tokenLength] = address(0);
+                        // _ownersNft[tokenLength] = address(0);
+                        _ownersNft[token] = address(0);
                         // _ownersNft[getTokenHolderCount(from)] = address(0);
                     }
                 }
-            }
-            unchecked {
                 i_totalSupply -= value;
             }
         } else {
@@ -248,9 +252,7 @@ abstract contract ERC404 is Context {
         return owner;
     }
 
-    function isNftToken(
-        uint256 amountOrId
-    ) internal view virtual returns (bool) {
+    function isNftToken(uint256 amountOrId) private view returns (bool) {
         return amountOrId <= i_tokenCounter && amountOrId > 0;
     }
 
@@ -279,10 +281,11 @@ abstract contract ERC404 is Context {
                         from,
                         erc20Amount
                     );
-                    for (uint i = 0; i < erc20Amount; i++) {
+                    for (uint i = 0; i < erc20Amount; ) {
                         // _updateNft(from, to, senderTokenId[i]);
                         _nftHolders[from].pop();
                         _ownersNft[senderTokenId[i]] = to;
+                        ++i;
                     }
                 }
             }
@@ -298,10 +301,11 @@ abstract contract ERC404 is Context {
         unchecked {
             uint256 erc20Amount = value / 10e18;
             if (erc20Amount > 0) {
-                for (uint i = 0; i < erc20Amount; i++) {
+                for (uint i = 0; i < erc20Amount; ) {
                     // _mintNft(_msgSender(), ++i_tokenCounter);
                     _nftHolders[_msgSender()].push(++i_tokenCounter);
                     _ownersNft[i_tokenCounter] = _msgSender();
+                    ++i;
                 }
             }
         }
