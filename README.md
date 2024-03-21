@@ -1,66 +1,21 @@
-## Foundry
+# Overview
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+ERC-404 merges the features of ERC-20 (fungible tokens) and ERC-721 (non-fungible tokens), offering a unique approach to tokenization in the blockchain ecosystem. The standard enables tokens to represent both fungible and non-fungible assets depending on their state.
 
-Foundry consists of:
+# Benefits
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- Enhanced Liquidity: By combining the features of fungible and non-fungible tokens, ERC-404 enhances liquidity by allowing assets to be traded in fractionalized forms.
 
-## Documentation
+- Composability: ERC-404 opens up new possibilities for composability within the decentralized finance (DeFi) space and other blockchain applications by providing a seamless integration of fungible and non-fungible assets.
 
-https://book.getfoundry.sh/
+# Contribution
 
-## Usage
+Contributions to the development and improvement of ERC-404 are welcome. If you have ideas, suggestions, or want to report issues, please feel free to open a new issue or submit a pull request.
 
-### Build
+# License
 
-```shell
-$ forge build
-```
+ERC-404 is released under the MIT License.
 
-### Test
+# Disclaimer
 
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+ERC-404 is an experimental token standard proposed by Acme and should be used with caution in production environments. While efforts have been made to ensure its functionality and security, users are advised to conduct thorough testing and assessment before deploying it in live systems.
