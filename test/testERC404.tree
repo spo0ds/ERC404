@@ -1,0 +1,32 @@
+testERC404
+├── When Total Supply is passed in Constructor
+│       └── It should mint the corresponding amount of ERC20 and ERC721 tokens.
+├── When Transfer Whole ERC20 Token
+│       └── It should transfer the ERC20 token and mint the same amount of NFT to the receiver.
+└── When owners approve ERC20 token to another address
+│        └── It should allow the approved address to use/transfer the ERC20 token.
+|        └── It should revert if a non-approved address tries to use the balance.
+|        └── Given only approved
+|            └── It should not mint NFT to that approved address.
+|        └── Given an approved address transfers from the owner to the intended address 
+|          └── It should allow the NFT to be either transferred, burned, or minted.
+├── When Transfer Fractional ERC20 Token
+│   └── Given the balance of ERC20 from the account
+│       └── When the ERC20 balance is not whole
+│           └── It should burn the corresponding NFT from the sender.
+│       └── When the balance is whole
+│           └── It should mint NFT to the receiver.
+|       └── it should only allow 1 nft to be burned between 0 to < 10^18
+└── When ERC20 token is minted
+|    └── it should mint nft if the erc20 amount is whole
+|    └── it should not mint nft if the erc20 amount is not whole
+└── when erc20 token is burned
+|    └── it should burn the nft
+└── when nft is burned
+|    └── it should allow only nft to be burned no changes to erc20
+└── when nft is transferred
+|    └── it should only transfer nft, no changes to erc20 balance
+└── when nft is approved
+|    └── it should only allow approved address to use that nft without changing erc20 balance
+└── When reciever has full erc20 token after someone transfer erc20
+     └── it should mint new nft to the receiver
