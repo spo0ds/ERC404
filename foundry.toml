@@ -4,4 +4,19 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+solc_version = "0.8.25"
+evm_version = "paris"
+auto_detect_solc = false
+optimizer = true
+optimizer_runs = 1_000
+gas_limit = 1_000_000_000
 remappings = ["@opensezppling/=lib/openzeppelin-contracts/"]
+
+[fuzz]
+runs = 1000
+seed = "0x1"
+
+[invariant]
+runs = 64
+depth = 32
+fail_on_revert = true
