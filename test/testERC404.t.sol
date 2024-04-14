@@ -38,7 +38,7 @@ contract testExample is Test {
         uint256 transferAmount = 10;
         vm.startPrank(owner);
         uint256 tokenCounterBefore = exmp.tokenCounter();
-        uint256[] memory senderTokenId = exmp.getNftTokensByCount(
+        uint256[] memory senderTokenId = exmp.getReverseNftTokensByCount(
             owner,
             transferAmount
         );
@@ -74,7 +74,10 @@ contract testExample is Test {
 
         // now alice uses approved token to transfer to bob
         vm.startPrank(alice);
-        uint256[] memory ownerTokenId = exmp.getNftTokensByCount(owner, 10);
+        uint256[] memory ownerTokenId = exmp.getReverseNftTokensByCount(
+            owner,
+            10
+        );
         exmp.transferFrom(owner, bob, 10 * 10e18);
         uint256 bobErc20Balance = exmp.balanceOfErc20(bob);
         assertEq(10 * 10e18, bobErc20Balance);
@@ -205,22 +208,22 @@ contract testExample is Test {
         vm.stopPrank();
     }
 
-    function test_WhenNftIsBurned() external {
-        vm.startPrank(owner);
-        uint256 ownerTokenId = exmp.getLastNftToken(owner);
-        address nftOwner = exmp.ownerOfNft(ownerTokenId);
-        assertEq(nftOwner, owner);
-        uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
-        uint256 tokenCounter = exmp.tokenCounter();
-        exmp.burnNft(ownerTokenId);
-        uint256 newTokenCounter = exmp.tokenCounter();
-        assertEq(tokenCounter, newTokenCounter);
-        uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
-        assertEq(erc20BalanceAfter, erc20BalanceBefore);
-        nftOwner = exmp.ownerOfNft(ownerTokenId);
-        assertEq(nftOwner, address(0));
-        vm.stopPrank();
-    }
+    // function test_WhenNftIsBurned() external {
+    //     vm.startPrank(owner);
+    //     uint256 ownerTokenId = exmp.getLastNftToken(owner);
+    //     address nftOwner = exmp.ownerOfNft(ownerTokenId);
+    //     assertEq(nftOwner, owner);
+    //     uint256 erc20BalanceBefore = exmp.balanceOfErc20(owner);
+    //     uint256 tokenCounter = exmp.tokenCounter();
+    //     exmp.burnNft(ownerTokenId);
+    //     uint256 newTokenCounter = exmp.tokenCounter();
+    //     assertEq(tokenCounter, newTokenCounter);
+    //     uint256 erc20BalanceAfter = exmp.balanceOfErc20(owner);
+    //     assertEq(erc20BalanceAfter, erc20BalanceBefore);
+    //     nftOwner = exmp.ownerOfNft(ownerTokenId);
+    //     assertEq(nftOwner, address(0));
+    //     vm.stopPrank();
+    // }
 
     function test_WhenNftIsTransferred() external {
         vm.startPrank(owner);

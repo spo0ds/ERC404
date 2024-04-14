@@ -109,6 +109,31 @@ abstract contract ERC404 is Context {
         }
     }
 
+    function getReverseNftTokensByCount(
+        address _address,
+        uint256 count
+    ) public view returns (uint256[] memory nftIds) {
+        unchecked {
+            uint256 len = _nftHolders[_address].length;
+            if (len == 0) {
+                revert AddressHaveNoNft();
+            }
+            nftIds = new uint256[](count);
+            for (uint32 i = 0; i < count; ) {
+                nftIds[i] = _nftHolders[_address][len - i - 1];
+                ++i;
+            }
+        }
+    }
+
+    function getLastNftToken(address _address) public view returns (uint256) {
+        uint256 length = _nftHolders[_address].length;
+        if (length == 0) {
+            revert AddressHaveNoNft();
+        }
+        return _nftHolders[_address][length - 1];
+    }
+
     function _getNftApproved(
         uint256 tokenId
     ) internal view virtual returns (address) {
@@ -139,19 +164,6 @@ abstract contract ERC404 is Context {
         uint256 amount
     ) private {
         _allowancesErc20[owner][spender] = amount;
-        unchecked {
-            uint256 erc20Amount = amount / 10e18;
-            if (erc20Amount > 0) {
-                uint256[] memory senderTokenId = getNftTokensByCount(
-                    owner,
-                    erc20Amount
-                );
-                for (uint i = 0; i < erc20Amount; ) {
-                    _nftApprovals[senderTokenId[i]] = spender;
-                    ++i;
-                }
-            }
-        }
     }
 
     function transfer(
@@ -165,10 +177,6 @@ abstract contract ERC404 is Context {
             unchecked {
                 uint256 erc20Amount = amountOrId / 10e18;
                 if (erc20Amount > 0) {
-                    // uint256[] memory senderTokenId = getNftTokensByCount(
-                    //     owner,
-                    //     erc20Amount
-                    // );
                     for (uint256 i = 0; i < erc20Amount; ) {
                         uint256 token = getLastNftToken(owner);
                         _nftHolders[owner].pop();
@@ -181,14 +189,6 @@ abstract contract ERC404 is Context {
             _updateErc20(owner, to, amountOrId);
         }
         return true;
-    }
-
-    function getLastNftToken(address _address) public view returns (uint256) {
-        uint256[] storage tokenId = _nftHolders[_address];
-        if (tokenId.length == 0) {
-            revert AddressHaveNoNft();
-        }
-        return tokenId[tokenId.length - 1];
     }
 
     function _updateErc20(
@@ -241,18 +241,6 @@ abstract contract ERC404 is Context {
         emit Transfer(from, to, value);
     }
 
-    function isNftToken(uint256 amountOrId) private view returns (bool) {
-        if (amountOrId <= i_tokenCounter) {
-            if (amountOrId > 0) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
     function transferFrom(
         address from,
         address to,
@@ -274,10 +262,6 @@ abstract contract ERC404 is Context {
             unchecked {
                 uint256 erc20Amount = amountOrId / 10e18;
                 if (erc20Amount > 0) {
-                    // uint256[] memory senderTokenId = getNftTokensByCount(
-                    //     from,
-                    //     erc20Amount
-                    // );
                     for (uint i = 0; i < erc20Amount; ) {
                         // changing nft owner
                         uint256 token = getLastNftToken(from);
@@ -307,7 +291,6 @@ abstract contract ERC404 is Context {
                 }
             }
         }
-        console.log("Minting value: ", value);
         _updateErc20(address(0), account, value);
     }
 
@@ -315,7 +298,6 @@ abstract contract ERC404 is Context {
         if (to == address(0)) {
             revert InvalidReceiver(address(0));
         }
-        // _nftHolders[to].push(tokenId);
         address previousOwner = _updateNft(address(0), to, tokenId);
         if (previousOwner != address(0)) {
             revert InvalidSender(address(0));
@@ -341,12 +323,12 @@ abstract contract ERC404 is Context {
         _updateErc20(account, address(0), value);
     }
 
-    // function _burnNft(uint256 tokenId) private {
-    //     address previousOwner = _updateNft(address(0), address(0), tokenId);
-    //     if (previousOwner == address(0)) {
-    //         revert ERC721NonexistentToken(tokenId);
-    //     }
-    // }
+    function _burnNft(uint256 tokenId) private {
+        address previousOwner = _updateNft(address(0), address(0), tokenId);
+        if (previousOwner == address(0)) {
+            revert ERC721NonexistentToken(tokenId);
+        }
+    }
 
     function _updateNft(
         address from,
@@ -369,5 +351,17 @@ abstract contract ERC404 is Context {
         _ownersNft[tokenId] = to;
         emit Transfer(from, to, tokenId);
         return owner;
+    }
+
+    function isNftToken(uint256 amountOrId) private view returns (bool) {
+        if (amountOrId <= i_tokenCounter) {
+            if (amountOrId > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 }

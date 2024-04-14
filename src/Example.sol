@@ -22,7 +22,7 @@ contract Example is ERC404 {
         _burnErc20(account, value);
     }
 
-    function burnNft(uint256 tokenId) external {
-        _burnNft(tokenId);
-    }
+    // function burnNft(uint256 tokenId) external {
+    //     _burnNft(tokenId);
+    // }
 }
